@@ -1,0 +1,82 @@
+docker run \
+    -it \
+    --network=host \
+    -v "/usr/local/share/ca-certificates/Yandex/YandexInternalRootCA.crt:/data/CA.pem" \
+    edenhill/kcat:1.7.1 -b rc1a-o9evrq2a69qn6l9d.mdb.yandexcloud.net:9091 \
+    -X security.protocol=SASL_SSL \
+    -X sasl.mechanisms=SCRAM-SHA-512 \
+    -X sasl.username=producer_consumer \
+    -X sasl.password=victor191146 \
+    -X ssl.ca.location=/data/CA.pem \
+    -L
+
+
+/usr/local/share/ca-certificates/Yandex/YandexInternalRootCA.crt
+
+
+curl -X POST https://order-gen-service.sprint9.tgcloudenv.ru/test_kafka \
+-H 'Content-Type: application/json; charset=utf-8' \
+--data-binary @- << EOF
+{
+    "student": "alexanderpavlyuk",
+    "kafka_connect":{
+        "host": "rc1a-o9evrq2a69qn6l9d.mdb.yandexcloud.net",
+        "port": 9091,
+        "topic": "order-service_orders",
+        "producer_name": "producer_consumer",
+        "producer_password": "victor191146"
+    }
+}
+EOF
+
+kafkacat -C \
+         -b rc1a-o9evrq2a69qn6l9d.mdb.yandexcloud.net:9091 \
+         -t "order-service_orders" \
+         -X security.protocol=SASL_SSL \
+         -X sasl.mechanism=SCRAM-SHA-512 \
+         -X sasl.username="producer_consumer" \
+         -X sasl.password="victor191146" \
+         -X ssl.ca.location=/usr/local/share/ca-certificates/Yandex/YandexInternalRootCA.crt -Z -K:
+
+
+curl -X POST https://order-gen-service.sprint9.tgcloudenv.ru/register_kafka \
+-H 'Content-Type: application/json; charset=utf-8' \
+--data-binary @- << EOF
+{
+    "student": "alexanderpavlyuk",
+    "kafka_connect":{
+        "host": "rc1a-o9evrq2a69qn6l9d.mdb.yandexcloud.net",
+        "port": 9091,
+        "topic": "order-service_orders",
+        "producer_name": "producer_consumer",
+        "producer_password": "victor191146"
+    }
+}
+EOF
+
+
+docker run --rm -it \
+    --network=host \
+    mykcat:latest \
+    kafkacat \
+    -b rc1a-o9evrq2a69qn6l9d.mdb.yandexcloud.net:9091 \
+    -X security.protocol=SASL_SSL \
+    -X sasl.mechanisms=SCRAM-SHA-512 \
+    -X sasl.username=producer_consumer \
+    -X sasl.password=victor191146 \
+    -X ssl.ca.location=/usr/local/share/ca-certificates/Yandex/YandexInternalRootCA.crt \
+    -t order-service_orders \
+    -C \
+    -o beginning
+
+ docker run --rm -it \
+    --network=host \
+    mykcat:latest \
+    kafkacat \
+    -b rc1a-o9evrq2a69qn6l9d.mdb.yandexcloud.net:9091 \
+    -X security.protocol=SASL_SSL \
+    -X sasl.mechanisms=SCRAM-SHA-512 \
+    -X sasl.username=producer_consumer \
+    -X sasl.password=victor191146 \
+    -X ssl.ca.location=/usr/local/share/ca-certificates/Yandex/YandexInternalRootCA.crt \
+    -L
