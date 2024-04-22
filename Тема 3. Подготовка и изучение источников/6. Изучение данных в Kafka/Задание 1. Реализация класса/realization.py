@@ -13,12 +13,25 @@ class KafkaConsumer:
                  group: str,
                  cert_path: str
                  ) -> None:
-        params = ...# напишите код здесь
+        params = {
+            'bootstrap.servers': f'{host}:{port}',
+            'security.protocol': 'SASL_SSL',
+            'ssl.ca.location': cert_path,
+            'sasl.mechanism': 'SCRAM-SHA-512',
+            'sasl.username': user,
+            'sasl.password': password,
+            'group.id': group,
+            'auto.offset.reset': 'earliest',
+            'enable.auto.commit': False,
+            'debug': 'all',
+            'client.id': 'someclientkey'
+        }
 
         self.consumer = Consumer(params)
         self.consumer.subscribe([topic])
 
     def consume(self, timeout: float = 3.0) -> Optional[Dict]:
         msg = self.consumer.poll(timeout=timeout)
-
-        ...# напишите код здесь
+        # Декодирование и печать сообщения
+        val = msg.value().decode()
+        return json.loads(val)
